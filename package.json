@@ -1,0 +1,23 @@
+{
+  "name": "nodebot",
+  "version": "1.0.0",
+  "description": "A telegram bot to post to Tumblr",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/96Octavian/nodebot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/96Octavian/nodebot/issues"
+  },
+  "homepage": "https://github.com/96Octavian/nodebot#readme",
+  "dependencies": {
+    "telegraf": "^3.5.2",
+    "tumblr.js": "^1.1.1"
+  }
+}
