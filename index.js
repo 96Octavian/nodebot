@@ -20,7 +20,9 @@ else {
 
 var poster = function (ctx) {
     if (post.text && post.body) {
-        client.createPost('aula-magna', post, function(err, data) {datis = data; erro = err});
+        client.createPost('aula-magna', post, function (err, data) {
+            ctx.reply('Post!\nLink: http://aula-magna.tumblr.com/post/' + data.id);
+        });
     }
     else {
         ctx.reply('Nessun post in coda');
