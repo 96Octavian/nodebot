@@ -2,7 +2,7 @@ var program = require('commander');
 const Telegraf = require('telegraf');
 var tumblr = require('tumblr.js');
 var keys = require('./keys')
-
+var client = keys.client
 program
   .version('0.0.1')
   .option('-T, --Token <TOKEN>', 'Specify the bot TOKEN')
@@ -17,11 +17,11 @@ else {
 }
 
 var porter = function (ctx) {
-    console.log(ctx);
+    console.log(ctx.message.text);
     ctx.reply('ricevuto');
-    console.log(client.client)
-}
-
+    console.log(client.blogInfo('peps96.tumblr.com', function (err, 
+data) {}));
+};
 const bot = new Telegraf(BOT_TOKEN)
 bot.command('start', (ctx) => ctx.reply('Hey'))
 bot.on('sticker', (ctx) => ctx.reply('👍'))
