@@ -27,6 +27,7 @@ var poster = function (ctx) {
     else {
         ctx.reply('Nessun post in coda');
     }
+    post = {}
 }
 
 var texter = function (ctx) {
@@ -50,6 +51,9 @@ var porter = function (ctx) {
     }
     else if (ctx.message.text.substring(0, 7) === '/title ') {
         titler(ctx);
+    }
+    else if (ctx.message.text.substring(0, 3) === '/id') {
+        ctx.reply(ctx.from.id);
     }
 };
 const bot = new Telegraf(BOT_TOKEN)
