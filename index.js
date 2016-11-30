@@ -1,5 +1,8 @@
 var program = require('commander');
 const Telegraf = require('telegraf');
+var tumblr = require('tumblr.js');
+var keys = require('./keys')
+
 program
   .version('0.0.1')
   .option('-T, --Token <TOKEN>', 'Specify the bot TOKEN')
@@ -16,7 +19,7 @@ else {
 var porter = function (ctx) {
     console.log(ctx);
     ctx.reply('ricevuto');
-    ctx.telegram.sendMessage(ctx.message.chat.id, `Hello ${ctx.state.role}`);
+    console.log(client.client)
 }
 
 const bot = new Telegraf(BOT_TOKEN)
