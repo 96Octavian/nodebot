@@ -3,9 +3,6 @@ const Telegraf = require('telegraf');
 program
   .version('0.0.1')
   .option('-T, --Token <TOKEN>', 'Specify the bot TOKEN')
-  .option('-P, --pineapple', 'Add pineapple')
-  .option('-b, --bbq-sauce', 'Add bbq sauce')
-  .option('-c, --cheese [type]', 'Add the specified type of cheese [marble]', 'marble')
   .parse(process.argv);
 if (program.Token) {
 	BOT_TOKEN = program.Token;
@@ -16,8 +13,14 @@ else {
 	process.exit(1);
 }
 
-const app = new Telegraf(BOT_TOKEN)
-app.command('start', (ctx) => ctx.reply('Hey'))
-app.on('sticker', (ctx) => ctx.reply('👍'))
-app.on('text', (ctx) => {console.log(ctx.message.text); ctx.reply(ctx.message.text);})
-app.startPolling()
+var porter = function (ctx) {
+    console.log(ctx);
+    ctx.reply('ricevuto');
+    ctx.telegram.sendMessage(ctx.message.chat.id, `Hello ${ctx.state.role}`);
+}
+
+const bot = new Telegraf(BOT_TOKEN)
+bot.command('start', (ctx) => ctx.reply('Hey'))
+bot.on('sticker', (ctx) => ctx.reply('👍'))
+bot.on('text', (ctx) => { porter(ctx) })
+bot.startPolling()
