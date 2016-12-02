@@ -42,17 +42,25 @@ var titler = function (ctx) {
 }
 
 var porter = function (ctx) {
-    console.log(ctx.message.text);
-    if (ctx.message.text === '/post') {
-        poster(ctx);
+    var text = ctx.message.text;
+    console.log('From id: ' + ctx.message.from.id);
+    console.log('Chat id: ' + ctx.message.chat.id)
+    console.log('Text: ' + text);
+    if ( ctx.from.id === 66441008 ) {
+        if (text === '/post') {
+            poster(ctx);
+        }
+        else if (text.substring(0, 6) === '/text ') {
+            texter(ctx);
+        }
+        else if (text.substring(0, 7) === '/title ') {
+            titler(ctx);
+        }
     }
-    else if (ctx.message.text.substring(0, 6) === '/text ') {
-        texter(ctx);
+    else {
+        ctx.reply('Fatti un po\' di affari tuoi');
     }
-    else if (ctx.message.text.substring(0, 7) === '/title ') {
-        titler(ctx);
-    }
-    else if (ctx.message.text.substring(0, 3) === '/id') {
+    if (text.substring(0, 3) === '/id') {
         ctx.reply(ctx.from.id);
     }
 };
