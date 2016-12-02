@@ -5,8 +5,9 @@ var util = require('util');
 var users = { starter: {}}
 
 /*Da aggiungere una funzione /blog che con una callback_query cambi il
-blog su cui postare
-Da definire le varie funzioni per creare i post*/
+blog su cui postare.
+Da definire le varie funzioni per creare i post.
+Controllo errori mancante*/
 
 program
   .version('0.0.1')
