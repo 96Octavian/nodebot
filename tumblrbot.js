@@ -25,6 +25,8 @@ const bot = new Telegraf(BOT_TOKEN)
 
 bot.use(Telegraf.memorySession())
 
+bot.on('message', ctx => console.log('Message'));
+
 bot.command('consumer_key', ctx => {
     ctx.session.clients.consumer_key = ctx.message.text.replace('/consumer_key ', '');
     return ctx.reply(ctx.session.clients);
