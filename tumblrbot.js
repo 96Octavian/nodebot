@@ -46,7 +46,7 @@ bot.command('token', ctx => {
     return ctx.reply(ctx.session.clients);
 })
 bot.command('login', ctx => {
-  arr = JSON.parse(authenticating[ctx.chat.id]);
+  arr = authenticating[ctx.chat.id];
   ctx.session.client = tumblr.createClient(arr);
   identity(ctx);
 })
