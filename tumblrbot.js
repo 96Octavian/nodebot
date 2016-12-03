@@ -2,9 +2,11 @@ var program = require('commander');
 const Telegraf = require('telegraf');
 var tumblr = require('tumblr.js');
 var fs = require('fs');
+const Markup = require('telegraf/lib/helpers/markup')
+const Extra = require('telegraf/lib/helpers/extra')
+
 authenticating = JSON.parse(fs.readFileSync('./auth.json'));
-/*Da aggiungere una funzione /blog che con una callback_query cambi il
-blog su cui postare
+/*
 Da definire le varie funzioni per creare i post
 Controllo errori mancante*/
 
@@ -25,7 +27,7 @@ const bot = new Telegraf(BOT_TOKEN)
 
 bot.use(Telegraf.memorySession())
 
-bot.on('message', ctx => console.log('Message'));
+//bot.on('message', ctx => console.log('Message'));
 
 bot.command('consumer_key', ctx => {
     ctx.session.clients.consumer_key = ctx.message.text.replace('/consumer_key ', '');
@@ -46,16 +48,6 @@ bot.command('token', ctx => {
 bot.command('allset', ctx => {
     arr = JSON.parse(ctx.message.text.replace('/allset ', ''));
     ctx.session.client = tumblr.createClient(arr);
-    /*ctx.session.client.userInfo(function (err, data) {
-      msg = 'Username: ' + data.user.name + '\nAvailable blogs: ';
-      name = data.user.blogs[0].name;
-      var i;
-      for ( i in data.user.blogs ) {
-        msg += '\n' + data.user.blogs[i].name
-        ctx.session.names.push(data.user.blogs[i].name)
-      }
-      ctx.reply(msg);
-    });*/
     identity(ctx);
     authenticating[ctx.chat.id] = arr;
     fs.writeFile('./auth.json', JSON.stringify(authenticating), function (err) {
@@ -67,16 +59,6 @@ bot.command('allset', ctx => {
 bot.command('set', ctx => {
     if (Object.keys(ctx.session.clients).length === 4) {
         ctx.session.client = tumblr.createClient(ctx.session.clients);
-        /*ctx.session.client.userInfo(function (err, data) {
-          msg = 'Username: ' + data.user.name + '\nAvailable blogs: ';
-          name = data.user.blogs[0].name;
-          var i;
-          for ( i in data.user.blogs ) {
-            msg += i.name
-            ctx.session.names.push(i.name)
-          }
-          ctx.reply(msg);
-        });*/
         identity(ctx);
         authenticating[ctx.chat.id] = arr;
         fs.writeFile('./auth.json', JSON.stringify(authenticating), function (err) {
@@ -89,7 +71,7 @@ bot.command('set', ctx => {
 var identity = function (ctx) {
     ctx.session.client.userInfo(function (err, data) {
         msg = 'Username: ' + data.user.name + '\nAvailable blogs: ';
-        name = data.user.blogs[0].name;
+        ctx.session.name = data.user.blogs[0].name;
         var i;
         for (i in data.user.blogs) {
             msg += '\n' + data.user.blogs[i].name
@@ -99,6 +81,22 @@ var identity = function (ctx) {
     })
 }
 bot.command('me', ctx => identity(ctx))
+
+var blog = function (ctx) {
+  buttons = []
+  for (e in ctx.session.names) {
+    buttons.push([Markup.callbackButton(ctx.session.names[e], ctx.session.names[e])])
+  }
+  return ctx.reply('<b>Coke</b> or <i>Pepsi?</i>', Extra.HTML().markup(
+    Markup.inlineKeyboard(buttons)
+    ))
+}
+bot.command('blogs', ctx => blog(ctx))
+
+bot.action(/.+/, (ctx) => {
+  return ctx.answerCallbackQuery(`Oh, ${ctx.match[0]}! Great choise`)
+  ctx.session.name = ${ctx.match[0]}
+})
 
 bot.command('start', ctx => {
     ctx.session.clients = ctx.session.clients || {}
