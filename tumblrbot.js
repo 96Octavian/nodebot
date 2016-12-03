@@ -69,16 +69,17 @@ bot.command('set', ctx => {
     }
 })
 var identity = function (ctx) {
-    ctx.session.client.userInfo(function (err, data) {
-        msg = 'Username: ' + data.user.name + '\nAvailable blogs: ';
-        ctx.session.name = data.user.blogs[0].name;
-        var i;
-        for (i in data.user.blogs) {
-            msg += '\n' + data.user.blogs[i].name
-            ctx.session.names.push(data.user.blogs[i].name)
-        }
-        return ctx.reply(msg);
-    })
+  ctx.session.names = []
+  ctx.session.client.userInfo(function (err, data) {
+    msg = 'Username: ' + data.user.name + '\nAvailable blogs: ';
+    ctx.session.name = ctx.session.name || data.user.blogs[0].name;
+    var i;
+    for (i in data.user.blogs) {
+      msg += '\n' + data.user.blogs[i].name
+      ctx.session.names.push(data.user.blogs[i].name)
+    }
+    return ctx.reply(msg);
+  })
 }
 bot.command('me', ctx => identity(ctx))
 
@@ -87,29 +88,62 @@ var blog = function (ctx) {
   for (e in ctx.session.names) {
     buttons.push([Markup.callbackButton(ctx.session.names[e], ctx.session.names[e])])
   }
-  return ctx.reply('<b>Coke</b> or <i>Pepsi?</i>', Extra.HTML().markup(
+  return ctx.reply('Choose your blog', Extra.HTML().markup(
     Markup.inlineKeyboard(buttons)
     ))
 }
-bot.command('blogs', ctx => blog(ctx))
+bot.command('blog', ctx => blog(ctx))
 
 bot.action(/.+/, (ctx) => {
-  return ctx.answerCallbackQuery(`Oh, ${ctx.match[0]}! Great choise`)
-  ctx.session.name = ${ctx.match[0]}
+  ctx.answerCallbackQuery(`Oh, ${ctx.match[0]}! Great choise`)
+  ctx.session.name = ctx.match[0]
 })
+
+var texter = function (ctx) {
+  ctx.session.post['type'] = 'text';
+  ctx.session.post['body'] = ctx.message.text.replace('/text ', '');
+  ctx.reply('Post body set');
+}
+var titler = function (ctx) {
+  ctx.session.post['title'] = ctx.message.text.replace('/title ', '');
+  ctx.reply('Post title set');
+}
+var poster = function (ctx) {
+  if (ctx.session.post.type && ctx.session.post.body) {
+      ctx.session.client.createPost(ctx.session.name, ctx.session.post, function (err, data) {
+          ctx.reply('Post!\nLink: http://' + ctx.session.name + '.tumblr.com/post/' + data.id);
+      });
+  }
+  else {
+      ctx.reply('Nessun post in coda');
+  }
+  ctx.session.post = {}
+}
+var porter = function (ctx) {
+  ctx.session.post = ctx.session.post || {}
+  var text = ctx.message.text;
+  console.log('From id: ' + ctx.message.from.id);
+  console.log('Chat id: ' + ctx.message.chat.id)
+  console.log('Text: ' + text);
+  if (text === '/post') {
+      poster(ctx);
+  }
+  else if (text.substring(0, 6) === '/text ') {
+      texter(ctx);
+  }
+  else if (text.substring(0, 7) === '/title ') {
+      titler(ctx);
+  }
+  else if (text.substring(0, 3) === '/id') {
+      ctx.reply(ctx.chat.id);
+  }
+};
+bot.command(['id', 'title', 'text', 'post'], (ctx) => { porter(ctx) })
 
 bot.command('start', ctx => {
     ctx.session.clients = ctx.session.clients || {}
     ctx.session.names = ctx.session.names || []
     ctx.reply('Hey');
-})
-bot.on('text', (ctx) => {
-    ctx.session.counter = ctx.session.counter || 0
-    ctx.session.counter++
-    return ctx.reply(`Message counter: ${ctx.session.counter}`)
-})
-bot.on('sticker', (ctx) => {
-    return ctx.reply(`Message counter: ${ctx.session.counter}`)
 })
 
 bot.startPolling()
