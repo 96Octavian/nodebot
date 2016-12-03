@@ -45,6 +45,11 @@ bot.command('token', ctx => {
     ctx.session.clients.token = ctx.message.text.replace('/token ', '');
     return ctx.reply(ctx.session.clients);
 })
+bot.command('login', ctx => {
+  arr = JSON.parse(authenticating[ctx.chat.id]);
+  ctx.session.client = tumblr.createClient(arr);
+  identity(ctx);
+})
 bot.command('allset', ctx => {
     arr = JSON.parse(ctx.message.text.replace('/allset ', ''));
     ctx.session.client = tumblr.createClient(arr);
