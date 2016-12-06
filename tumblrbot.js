@@ -175,7 +175,7 @@ var poster = function (ctx) {
         ctx.reply('Error: no post created')
       }
       else {
-        logger.info('New post created')
+        logger.info('New ' + ctx.session.state + ' created')
         ctx.reply('Post!\nLink: http://' + ctx.session.name + '.tumblr.com/post/' + data.id);
         ctx.session.post = {}
       }
@@ -192,14 +192,14 @@ var tagger = function (ctx) {
   logger.info('Tags set');
 }
 var stater = function (ctx) {
-  if (ctx.message.text.replace('/state ', '') in ['published', 'draft', 'queue', 'private']) {
+  if (['published', 'draft', 'queue', 'private'].indexOf(ctx.message.text.replace('/state ', '')) !== -1) {
     ctx.session.post['state'] = ctx.message.text.replace('/state ', '');
     ctx.reply('State set');
     logger.info('State set');
   }
   else {
     ctx.reply('State must be one of published, draft, queue, private');
-    logger.info('Unrecognize state');
+    logger.info('Unrecognize state \'' + ctx.message.text.replace('/state ', '') + '\'');
   }
 }
 var porter = function (ctx) {
@@ -234,7 +234,7 @@ var porter = function (ctx) {
     }
   }
 };
-bot.command(['id', 'title', 'text', 'post'], (ctx) => { logger.debug('\'', ctx.message.text, '\' from', ctx.chat.id); porter(ctx) })
+bot.command(['id', 'title', 'text', 'post', 'tags', 'state'], (ctx) => { logger.debug('\'', ctx.message.text, '\' from', ctx.chat.id); porter(ctx) })
 
 bot.command('start', ctx => {
   logger.debug('\'/start\' from', ctx.chat.id); 
