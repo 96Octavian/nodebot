@@ -30,8 +30,12 @@ const bot = new Telegraf(BOT_TOKEN)
 const app = new Telegram(BOT_TOKEN)
 
 bot.use(Telegraf.memorySession())
-
+//Uncomment once if a message crashes the bot
 //bot.on('message', ctx => console.log('Message'));
+
+/*
+AUTHENTICATION SECTION
+*/
 
 var consumer_key = function (ctx) {
   logger.debug('consumer_key from', ctx.chat.id)
@@ -154,7 +158,7 @@ bot.command('me', ctx => {
     logger.warn('User', ctx.chat.id, 'not logged in');
   }
 })
-
+//Choose the destination blog
 var blog = function (ctx) {
   if (typeof ctx.session.names !== 'undefined' && ctx.session.names.length !== 0) {
     buttons = []
@@ -170,13 +174,16 @@ var blog = function (ctx) {
   }
 }
 bot.command('blog', ctx => {logger.debug('\'/blog\' from', ctx.chat.id); blog(ctx)})
-
 bot.action(/.+/, (ctx) => {
   ctx.session.name = ctx.match[0]
   ctx.answerCallbackQuery(ctx.match[0] + ' set as destination')
   ctx.editMessageText(ctx.match[0] + ' set as destination')
   logger.info(ctx.match[0], 'set as destination for', ctx.chat.id)  
 })
+
+/*
+TEXT HANDLING SECTION
+*/
 
 var texter = function (ctx) {
   ctx.session.post['type'] = 'text';
@@ -283,31 +290,21 @@ var porter = function (ctx) {
 }
 bot.command(['id', 'title', 'text', 'post', 'tags', 'state'], (ctx) => { logger.debug('\'', ctx.message.text, '\' from', ctx.chat.id); porter(ctx) })
 
+/*
+PHOTO HANDLING SECTION
+*/
+
 var downloadPhoto = function (ctx, id) {
   return app.getFileLink(ctx.message.photo[id].file_id)
   .then(function(value) {
-      download(value, './img', cb, ctx)
       ctx.session.post['source'] = value;
-      logger.info('Downloading');
+      logger.info('Image source set');
+      ctx.reply('Image source set');
   }, function(error) {
-    ctx.reply('No photo received')
+    logger.info('Error while getting photo URL');
+    ctx.reply('No photo received');
   })
 }
-var cb = function (ctx) { ctx.reply('Done'); logger.info('Done')}
-var download = function (url, dest, cb, ctx) {
-    var file = fs.createWriteStream(dest);
-    var request = http.get(url, function (response) {
-        response.pipe(file);
-        file.on('finish', function () {
-            file.close(cb(ctx));  // close() is async, call cb after close completes.
-        });
-    }).on('error', function (err) { // Handle errors
-        fs.unlink(dest); // Delete the file async. (But we don't check the result)
-        logger.warn('Unable to upload photo');
-        logger.warn(err);
-        ctx.reply('Error: photo not uploaded');
-    });
-};
 bot.on('photo', ctx => {
     logger.info('Received photo');
     ctx.session.post = ctx.session.post || {}
@@ -316,7 +313,6 @@ bot.on('photo', ctx => {
     var lnk = downloadPhoto(ctx, id);
     logger.debug(lnk);
 })
-
 var captioner = function (ctx) {
     ctx.session.post['caption'] = ctx.message.text.replace('/caption ', '');
     ctx.session.post['type'] = 'photo';
@@ -349,6 +345,49 @@ bot.command(['caption', 'link'], ctx => {
         }
     }
 })
+
+/*
+QUOTES HANDLING SECTION
+*/
+
+var quoter = function (ctx) {
+    ctx.session.post['quote'] = ctx.message.text.replace('/quote ', '');
+    ctx.session.post['type'] = 'quote';
+    ctx.reply('Quote text set');
+    logger.info('Quote text set');
+}
+var sourcer = function (ctx) {
+    ctx.session.post['source'] = ctx.message.text.replace('/source ', '');
+    ctx.session.post['type'] = 'quote';
+    ctx.reply('Quote source set');
+    logger.info('Quote source set');
+}
+bot.command(['quote', 'source'], ctx => {
+    if (typeof ctx.session.client === 'undefined') {
+        logger.warn('User', ctx.chat.id, 'has not yet logged in');
+        ctx.reply('You have to /login first or set your credentials')
+    }
+    else if (typeof ctx.session.name === 'undefined') {
+        logger.warn('User', ctx.chat.id, 'has not yet selected a main blog');
+        ctx.reply('You have to select your destination using the /blog command')
+    }
+    else {
+        ctx.session.post = ctx.session.post || {}
+        var text = ctx.message.text;
+        if (text.substring(0,7) === '/quote ') {
+            quoter(ctx);
+        }
+        else if (text.substring(0,8) === '/source ') {
+            quoter(ctx);
+        }
+    }
+})
+
+/*
+LINK HANDLING SECTION
+*/
+
+
 
 bot.command('start', ctx => {
   logger.debug('\'/start\' from', ctx.chat.id); 
