@@ -1,4 +1,5 @@
 var program = require('commander');
+var http = require('https');
 const Telegraf = require('telegraf');
 const Telegram = require('telegraf/lib/telegram')
 var tumblr = require('tumblr.js');
@@ -64,18 +65,25 @@ bot.command('login', ctx => {
 })
 bot.command('allset', ctx => {
   logger.debug('\'/allset\' from', ctx.chat.id)
-  var firstJSON = ctx.message.text.replace('/allset ', '');
-  if (firstJSON.lenght === 0) {logger.warn('Not a valid oAuth key'); return ctx.reply('Not a valid oAuth key')}
-  var fixedJSON = firstJSON.replace(/(\r\n|\n|\r)/gm,"").replace(/'/g, "\"");
-  arr = JSON.parse(fixedJSON.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2": '));
-  ctx.session.client = tumblr.createClient(arr);
-  identity(ctx);
-  authenticating[ctx.chat.id] = arr;
-  fs.writeFile('./auth.json', JSON.stringify(authenticating), function (err) {
-      if (err) logger.error(err);
-      logger.warn('New client ID set');
-  })
-  return ctx.reply('All set');
+  var firstJSON = ctx.message.text.replace('/allset', '');
+  if (!firstJSON.trim()) {
+      logger.warn('No oAuth key specified');
+      ctx.reply('No oAuth key specified');
+  }
+  else {
+      var fixedJSON = firstJSON.replace(/(\r\n|\n|\r)/gm, "").replace(/'/g, "\"");
+      fixedJSON = fixedJSON.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2": ');
+      logger.debug(fixedJSON);
+      arr = JSON.parse(fixedJSON);
+      ctx.session.client = tumblr.createClient(arr);
+      identity(ctx);
+      authenticating[ctx.chat.id] = arr;
+      fs.writeFile('./auth.json', JSON.stringify(authenticating), function (err) {
+          if (err) { logger.error(err); return }
+          else { logger.warn('New client ID set') }
+      })
+      ctx.reply('Credential recorded, testing...');
+  }
 })
 var set = function (ctx) {
   logger.debug('\'/set\' from', ctx.chat.id)
@@ -87,7 +95,7 @@ var set = function (ctx) {
       if (err) logger.error(err);
       logger.warn('New client ID set');
     })
-    return ctx.reply('All set');
+    return ctx.reply('Credential recorded, testing...');
   }
   else {
     logger.error('Client credentials not completely specified');
@@ -116,6 +124,15 @@ bot.command(['consumer_secret', 'consumer_key', 'token', 'token_secret', 'set'],
 var identity = function (ctx) {
   ctx.session.names = []
   ctx.session.client.userInfo(function (err, data) {
+      if (err) {
+          delete authenticating[ctx.chat.id];
+          fs.writeFile('./auth.json', JSON.stringify(authenticating), function (err) {
+              if (err) { logger.error(err); return }
+              else { logger.warn('Wrong credentials: ID removed') }
+          })
+          ctx.reply('Wrong credentials, removed');
+          return;
+      }
     msg = 'Username: ' + data.user.name + '\nAvailable blogs: ';
     ctx.session.name = ctx.session.name || data.user.blogs[0].name;
     var i;
@@ -123,7 +140,8 @@ var identity = function (ctx) {
       msg += '\n' + data.user.blogs[i].name
       ctx.session.names.push(data.user.blogs[i].name)
     }
-    return ctx.reply(msg);
+    msg = '<i>Authenticated</i>\n' + msg;
+    return ctx.reply(msg, { parse_mode: 'HTML' });
   })
 }
 bot.command('me', ctx => {
@@ -172,22 +190,33 @@ var titler = function (ctx) {
   logger.info('Post tile set');
 }
 var poster = function (ctx) {
-  if (ctx.session.post.type && ctx.session.post.body) {
+  if (ctx.session.post.type) {
+    if (ctx.session.post.type === 'text' && !ctx.session.post.body) {
+        ctx.reply('No post body set');
+        logger.info('No post body set');
+        return;
+    }
+    if (ctx.session.post.type === 'photo' && !ctx.session.post.source) {
+        ctx.reply('No image set');
+        logger.info('No image set');
+        return;
+    }
     ctx.session.client.createPost(ctx.session.name, ctx.session.post, function (err, data) {
       if (err) {
         logger.err(err);
         ctx.reply('Error: no post created')
       }
       else {
-        logger.info('New ' + ctx.session.state + ' created')
+        ctx.session.state = ctx.session.state || 'published'
+        logger.info('New ' + ctx.session.state + ' post created')
         ctx.reply('Post!\nLink: http://' + ctx.session.name + '.tumblr.com/post/' + data.id);
         ctx.session.post = {}
       }
     });
   }
   else {
-    logger.debug('Post action requested but no post set')
-    ctx.reply('No post body set');
+    logger.debug('Post action requested but no post type set')
+    ctx.reply('No post type set');
   }
 }
 var tagger = function (ctx) {
@@ -205,6 +234,17 @@ var stater = function (ctx) {
     ctx.reply('State must be one of published, draft, queue, private');
     logger.info('Unrecognize state \'' + ctx.message.text.replace('/state ', '') + '\'');
   }
+}
+var formatter = function (ctx) {
+    if (['html', 'markdown'].indexOf(ctx.message.text.replace('/format ', '')) !== -1) {
+        ctx.session.post['state'] = ctx.message.text.replace('/format ', '');
+        ctx.reply('Format set');
+        logger.info('Format set');
+    }
+    else {
+        ctx.reply('Unrecognized format');
+        logger.info('Unrecognized format');
+    }
 }
 var porter = function (ctx) {
   if (typeof ctx.session.client === 'undefined') {
@@ -236,24 +276,78 @@ var porter = function (ctx) {
     else if (text.substring(0,7) === '/state ') {
       stater(ctx);
     }
+    else if (text.substring(0, 8) === '/format ') {
+      formatter(ctx);
+    }
   }
-};
+}
 bot.command(['id', 'title', 'text', 'post', 'tags', 'state'], (ctx) => { logger.debug('\'', ctx.message.text, '\' from', ctx.chat.id); porter(ctx) })
 
-var downloadPhoto = function (ctx) {
-  logger.debug(ctx.message.photo[2].file_id)
-  return app.getFileLink(ctx.message.photo[2].file_id)
+var downloadPhoto = function (ctx, id) {
+  return app.getFileLink(ctx.message.photo[id].file_id)
   .then(function(value) {
-    ctx.replyWithPhoto({url:value})
+      download(value, './img', cb, ctx)
+      ctx.session.post['source'] = value;
+      logger.info('Downloading');
   }, function(error) {
     ctx.reply('No photo received')
   })
 }
-
+var cb = function (ctx) { ctx.reply('Done'); logger.info('Done')}
+var download = function (url, dest, cb, ctx) {
+    var file = fs.createWriteStream(dest);
+    var request = http.get(url, function (response) {
+        response.pipe(file);
+        file.on('finish', function () {
+            file.close(cb(ctx));  // close() is async, call cb after close completes.
+        });
+    }).on('error', function (err) { // Handle errors
+        fs.unlink(dest); // Delete the file async. (But we don't check the result)
+        logger.warn('Unable to upload photo');
+        logger.warn(err);
+        ctx.reply('Error: photo not uploaded');
+    });
+};
 bot.on('photo', ctx => {
-  logger.info('Received photo');
-  var lnk = downloadPhoto(ctx)
-  logger.debug(lnk)
+    logger.info('Received photo');
+    ctx.session.post = ctx.session.post || {}
+    ctx.session.post['type'] = 'photo';
+    var id = ctx.message.photo.length - 1;
+    var lnk = downloadPhoto(ctx, id);
+    logger.debug(lnk);
+})
+
+var captioner = function (ctx) {
+    ctx.session.post['caption'] = ctx.message.text.replace('/caption ', '');
+    ctx.session.post['type'] = 'photo';
+    ctx.reply('Caption set');
+    logger.info('Caption set');
+}
+var linker = function (ctx) {
+    ctx.session.post['link'] = ctx.message.text.replace('/link ', '');
+    ctx.session.post['type'] = 'photo';
+    ctx.reply('Link set');
+    logger.info('Link set');
+}
+bot.command(['caption', 'link'], ctx => {
+    if (typeof ctx.session.client === 'undefined') {
+        logger.warn('User', ctx.chat.id, 'has not yet logged in');
+        ctx.reply('You have to /login first or set your credentials')
+    }
+    else if (typeof ctx.session.name === 'undefined') {
+        logger.warn('User', ctx.chat.id, 'has not yet selected a main blog');
+        ctx.reply('You have to select your destination using the /blog command')
+    }
+    else {
+        ctx.session.post = ctx.session.post || {}
+        var text = ctx.message.text;
+        if (text.substring(0,9) === '/caption ') {
+            captioner(ctx);
+        }
+        else if (text.substring(0, 8) === '/linker ') {
+            linker(ctx);
+        }
+    }
 })
 
 bot.command('start', ctx => {
