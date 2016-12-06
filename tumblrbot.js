@@ -1,5 +1,6 @@
 var program = require('commander');
 const Telegraf = require('telegraf');
+const Telegram = require('telegraf/lib/telegram')
 var tumblr = require('tumblr.js');
 var fs = require('fs');
 var logger = require('./logger');
@@ -25,6 +26,7 @@ else {
 }
 
 const bot = new Telegraf(BOT_TOKEN)
+const app = new Telegram(BOT_TOKEN)
 
 bot.use(Telegraf.memorySession())
 
@@ -62,14 +64,16 @@ bot.command('login', ctx => {
 })
 bot.command('allset', ctx => {
   logger.debug('\'/allset\' from', ctx.chat.id)
-  var fixedJSON = ctx.message.text.replace('/allset ', '').replace(/(\r\n|\n|\r)/gm,"").replace(/'/g, "\"");
+  var firstJSON = ctx.message.text.replace('/allset ', '');
+  if (firstJSON.lenght === 0) {logger.warn('Not a valid oAuth key'); return ctx.reply('Not a valid oAuth key')}
+  var fixedJSON = firstJSON.replace(/(\r\n|\n|\r)/gm,"").replace(/'/g, "\"");
   arr = JSON.parse(fixedJSON.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2": '));
   ctx.session.client = tumblr.createClient(arr);
   identity(ctx);
   authenticating[ctx.chat.id] = arr;
   fs.writeFile('./auth.json', JSON.stringify(authenticating), function (err) {
-      if (err) logger.error(err);;
-      logger.warn('New client ID set');;
+      if (err) logger.error(err);
+      logger.warn('New client ID set');
   })
   return ctx.reply('All set');
 })
@@ -236,10 +240,30 @@ var porter = function (ctx) {
 };
 bot.command(['id', 'title', 'text', 'post', 'tags', 'state'], (ctx) => { logger.debug('\'', ctx.message.text, '\' from', ctx.chat.id); porter(ctx) })
 
+var downloadPhoto = function (ctx) {
+  logger.debug(ctx.message.photo[2].file_id)
+  return app.getFileLink(ctx.message.photo[2].file_id)
+  .then(function(value) {
+    ctx.replyWithPhoto({url:value})
+  }, function(error) {
+    ctx.reply('No photo received')
+  })
+}
+
+bot.on('photo', ctx => {
+  logger.info('Received photo');
+  var lnk = downloadPhoto(ctx)
+  logger.debug(lnk)
+})
+
 bot.command('start', ctx => {
   logger.debug('\'/start\' from', ctx.chat.id); 
   ctx.session.names = ctx.session.names || []
   ctx.reply('Hey');
 })
 
+bot.telegram.getMe().then((botInfo) => {
+  bot.options.username = botInfo.username
+  logger.info('Started bot ' + bot.options.username)
+})
 bot.startPolling()
