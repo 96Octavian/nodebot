@@ -62,7 +62,8 @@ bot.command('login', ctx => {
 })
 bot.command('allset', ctx => {
   logger.debug('\'/allset\' from', ctx.chat.id)
-  arr = JSON.parse(ctx.message.text.replace('/allset ', ''));
+  var fixedJSON = ctx.message.text.replace('/allset ', '').replace(/(\r\n|\n|\r)/gm,"").replace(/'/g, "\"");
+  arr = JSON.parse(fixedJSON.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2": '));
   ctx.session.client = tumblr.createClient(arr);
   identity(ctx);
   authenticating[ctx.chat.id] = arr;
@@ -185,6 +186,22 @@ var poster = function (ctx) {
     ctx.reply('No post body set');
   }
 }
+var tagger = function (ctx) {
+  ctx.session.post['tags'] = ctx.message.text.replace('/tags ', '');
+  ctx.reply('Tags set');
+  logger.info('Tags set');
+}
+var stater = function (ctx) {
+  if (ctx.message.text.replace('/state ', '') in ['published', 'draft', 'queue', 'private']) {
+    ctx.session.post['state'] = ctx.message.text.replace('/state ', '');
+    ctx.reply('State set');
+    logger.info('State set');
+  }
+  else {
+    ctx.reply('State must be one of published, draft, queue, private');
+    logger.info('Unrecognize state');
+  }
+}
 var porter = function (ctx) {
   if (typeof ctx.session.client === 'undefined') {
      logger.warn('User', ctx.chat.id, 'has not yet logged in');
@@ -206,8 +223,14 @@ var porter = function (ctx) {
     else if (text.substring(0, 7) === '/title ') {
       titler(ctx);
     }
-    else if (text.substring(0, 3) === '/id') {
+    else if (text === '/id') {
       ctx.reply(ctx.chat.id);
+    }
+    else if (text.substring(0,6) === '/tags ') {
+      tagger(ctx);
+    }
+    else if (text.substring(0,7) === '/state ') {
+      stater(ctx);
     }
   }
 };
