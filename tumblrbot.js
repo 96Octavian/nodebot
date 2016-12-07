@@ -175,17 +175,22 @@ var blog = function (ctx) {
 }
 bot.command('blog', ctx => {
   logger.debug('\'/blog\' from', ctx.chat.id);
-  ctx.getChatAdministrators()
-  .then(function(value) {
-    for ( i in value) {
-      if (ctx.from.id === value[i]['user']['id']) {
-        return blog(ctx);
+  if (ctx.message.chat.type !== 'private') {
+    ctx.getChatAdministrators()
+    .then(function(value) {
+      for ( i in value) {
+        if (ctx.from.id === value[i]['user']['id']) {
+          return blog(ctx);
+        }
       }
-    }
-    ctx.reply('You are not an Admin of this group');
-  }, function(error) {
-    return logger.debug(error);
-  })
+      ctx.reply('You are not an Admin of this group');
+    }, function(error) {
+      return logger.debug(error);
+    })
+  }
+  else {
+    blog(ctx);
+  }
 })
 bot.action(/.+/, (ctx) => {
   ctx.session.name = ctx.match[0]
@@ -286,6 +291,7 @@ bot.on('photo', ctx => {
     logger.info('Received photo');
     ctx.session.post = ctx.session.post || {}
     ctx.session.post['type'] = 'photo';
+    if (ctx.message.caption) {ctx.session.post['caption'] = ctx.message.caption; ctx.reply('Caption set'); logger.info('Caption set')}
     var id = ctx.message.photo.length - 1;
     var lnk = downloadPhoto(ctx, id);
     logger.debug(lnk);
