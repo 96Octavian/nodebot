@@ -401,29 +401,29 @@ bot.command(['id', 'title', 'text', 'post', 'tags', 'state', 'format', 'url', 'd
 bot.command('help', ctx => {
   var msg = 'If you need to start from scratch, please use /start to set\
   an oAuth key for your account\n\
-  /allset {Your /oAuth credentials}\n\
-  /login to authenticate if you\ve already sent oAuth\n\
-  /blog to choose where to post: in groups only administrators can set this\n\
-  All post types\n\
+  /allset {Your oAuth credentials}\n\
+  /login to authenticate if you\'ve already sent oAuth\n\
+  /blog to choose where to post (in groups only administrators can set this)\n\
+  <i>All post types</i>\n\
   /state: the state of the post. Specify one of the following:  published, draft, queue, private\n\
   /tags: comma-separated tags for this post\n\
   /format: sets the format type of post. Supported formats are: html & markdown\n\
-  Text posts\n\
+  <i>Text posts</i>\n\
   /title: the optional title of the post\n\
   /text: the full post body, HTML allowed\n\
-  Photo posts:\n\
+  <i>Photo posts</i>\n\
   Send a photo to set the photo source\n\
   /caption: the user-supplied caption\n\
   /link: the \'click-through URL\' for the photo\n\
-  Quote posts\n\
+  <i>Quote posts</i>\n\
   /quote: the full text of the quote\n\
   /source: cited source\n\
-  Link posts\n\
+  <i>Link posts</i>\n\
   /title: the title of the page the link points to\n\
   /url: the link\n\
   /description: a user-supplied description\n\
   That\' all folks! Have fun'
-  ctx.reply(msg)
+  ctx.reply(msg, { parse_mode: 'HTML' })
 })
 
 bot.command('start', ctx => {
