@@ -194,7 +194,7 @@ var texter = function (ctx) {
 var titler = function (ctx) {
   ctx.session.post['title'] = ctx.message.text.replace('/title ', '');
   ctx.reply('Post title set');
-  logger.info('Post tile set');
+  logger.info('Post title set');
 }
 var poster = function (ctx) {
   if (ctx.session.post.type) {
@@ -387,12 +387,53 @@ bot.command(['quote', 'source'], ctx => {
 LINK HANDLING SECTION
 */
 
-
+var urler = function (ctx) {
+    ctx.session.post['url'] = ctx.message.text.replace('/url ', '');
+    ctx.session.post['type'] = 'link';
+    ctx.reply('Link URL set');
+    logger.info('Link URL text set');
+}
+var descriptioner = function (ctx) {
+    ctx.session.post['description'] = ctx.message.text.replace('/description ', '');
+    ctx.session.post['type'] = 'link';
+    ctx.reply('Link description set');
+    logger.info('Link description set');
+}
+bot.command(['url', 'description'], ctx => {
+    if (typeof ctx.session.client === 'undefined') {
+        logger.warn('User', ctx.chat.id, 'has not yet logged in');
+        ctx.reply('You have to /login first or set your credentials')
+    }
+    else if (typeof ctx.session.name === 'undefined') {
+        logger.warn('User', ctx.chat.id, 'has not yet selected a main blog');
+        ctx.reply('You have to select your destination using the /blog command')
+    }
+    else {
+        ctx.session.post = ctx.session.post || {}
+        var text = ctx.message.text;
+        if (text.substring(0,5) === '/url ') {
+            quoter(ctx);
+        }
+        else if (text.substring(0,13) === '/description ') {
+            quoter(ctx);
+        }
+    }
+})
 
 bot.command('start', ctx => {
   logger.debug('\'/start\' from', ctx.chat.id); 
-  ctx.session.names = ctx.session.names || []
-  ctx.reply('Hey');
+  msg = 'Hi! Welcome aboard the Tumblr posting bot! To get things up, you need to provide me\
+  with your tumblr oAuth key (/oAuth if you don\'t know how to find it) using\
+  \n<code>/allset {your oAuth key}</code>\n\
+  If you already sent that, simply use /login.\n\
+  Almost done! Use /blog to choose one of your blogs as destination.\n\
+  To creat a post simply send the text you wish: for example, using\n\
+  <code>/text I\'m sending messagest to my blog!</code>\n\
+  <code>/title Awesome</code>\n\
+  <code>/tags awesome,telegram,telegramBot,tumblr,nerd</code>\n\
+  will create a text post with tags.\n\
+  Use /help for a more detailed command list'
+  ctx.reply(msg, { parse_mode: 'HTML' });
 })
 
 bot.telegram.getMe().then((botInfo) => {
