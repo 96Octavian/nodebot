@@ -399,7 +399,9 @@ var porter = function (ctx) {
 bot.command(['id', 'title', 'text', 'post', 'tags', 'state', 'format', 'url', 'description', 'quote', 'source', 'caption', 'link'], (ctx) => { logger.debug('\'', ctx.message.text, '\' from', ctx.chat.id); porter(ctx) })
 
 bot.command('help', ctx => {
-  var msg = '/allset {Your /oAuth credentials}\n\
+  var msg = 'If you need to start from scratch, please use /start to set\
+  an oAuth key for your account\n\
+  /allset {Your /oAuth credentials}\n\
   /login to authenticate if you\ve already sent oAuth\n\
   /blog to choose where to post: in groups only administrators can set this\n\
   All post types\n\
