@@ -173,7 +173,20 @@ var blog = function (ctx) {
     ctx.reply('You are not logged in');
   }
 }
-bot.command('blog', ctx => {logger.debug('\'/blog\' from', ctx.chat.id); blog(ctx)})
+bot.command('blog', ctx => {
+  logger.debug('\'/blog\' from', ctx.chat.id);
+  ctx.getChatAdministrators()
+  .then(function(value) {
+    for ( i in value) {
+      if (ctx.from.id === value[i]['user']['id']) {
+        return blog(ctx);
+      }
+    }
+    ctx.reply('You are not an Admin of this group');
+  }, function(error) {
+    return logger.debug(error);
+  })
+})
 bot.action(/.+/, (ctx) => {
   ctx.session.name = ctx.match[0]
   ctx.answerCallbackQuery(ctx.match[0] + ' set as destination')
@@ -382,7 +395,7 @@ bot.command(['id', 'title', 'text', 'post', 'tags', 'state', 'format', 'url', 'd
 bot.command('help', ctx => {
   var msg = '/allset {Your /oAuth credentials}\n\
   /login to authenticate if you\ve already sent oAuth\n\
-  /blog to choose where to post\n\
+  /blog to choose where to post: in groups only administrators can set this\n\
   All post types\n\
   /state: the state of the post. Specify one of the following:  published, draft, queue, private\n\
   /tags: comma-separated tags for this post\n\
