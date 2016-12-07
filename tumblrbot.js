@@ -10,7 +10,7 @@ const Extra = require('telegraf/lib/helpers/extra')
 
 authenticating = JSON.parse(fs.readFileSync('./auth.json'));
 /*
-Solo post di testo presenti
+Missing chat posts
 */
 
 program
@@ -417,7 +417,8 @@ bot.command('start', ctx => {
   <code>/title Awesome</code>\n\
   <code>/tags awesome,telegram,telegramBot,tumblr,nerd</code>\n\
   will create a text post with tags.\n\
-  Use /help for a more detailed command list'
+  Use /help for a more detailed command list\n\
+  (PS: i\'d suggest you edit your message containing the oAuth key immediately once sent, if your are in a group)'
   ctx.reply(msg, { parse_mode: 'HTML' });
 })
 bot.command('oAuth', ctx => ctx.reply('http://telegra.ph/Getting-an-oAuth-key-12-07'))
