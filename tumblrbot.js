@@ -301,6 +301,7 @@ var quoter = function (ctx) {
     logger.info('Quote text set');
 }
 var sourcer = function (ctx) {
+  ctx.session.post['type'] = 'quote'
     ctx.session.post['source'] = ctx.message.text.replace('/source ', '');
     ctx.reply('Quote source set');
     logger.info('Quote source set');
@@ -377,6 +378,32 @@ var porter = function (ctx) {
   }
 }
 bot.command(['id', 'title', 'text', 'post', 'tags', 'state', 'format', 'url', 'description', 'quote', 'source', 'caption', 'link'], (ctx) => { logger.debug('\'', ctx.message.text, '\' from', ctx.chat.id); porter(ctx) })
+
+bot.command('help', ctx => {
+  var msg = '/allset {Your /oAuth credentials}\n\
+  /login to authenticate if you\ve already sent oAuth\n\
+  /blog to choose where to post\n\
+  All post types\n\
+  /state: the state of the post. Specify one of the following:  published, draft, queue, private\n\
+  /tags: comma-separated tags for this post\n\
+  /format: sets the format type of post. Supported formats are: html & markdown\n\
+  Text posts\n\
+  /title: the optional title of the post\n\
+  /text: the full post body, HTML allowed\n\
+  Photo posts:\n\
+  Send a photo to set the photo source\n\
+  /caption: the user-supplied caption\n\
+  /link: the \'click-through URL\' for the photo\n\
+  Quote posts\n\
+  /quote: the full text of the quote\n\
+  /source: cited source\n\
+  Link posts\n\
+  /title: the title of the page the link points to\n\
+  /url: the link\n\
+  /description: a user-supplied description\n\
+  That\' all folks! Have fun'
+  ctx.reply(msg)
+})
 
 bot.command('start', ctx => {
   logger.debug('\'/start\' from', ctx.chat.id); 
