@@ -253,6 +253,7 @@ var formatter = function (ctx) {
         logger.info('Unrecognized format');
     }
 }
+/*
 var porter = function (ctx) {
   if (typeof ctx.session.client === 'undefined') {
      logger.warn('User', ctx.chat.id, 'has not yet logged in');
@@ -289,6 +290,7 @@ var porter = function (ctx) {
   }
 }
 bot.command(['id', 'title', 'text', 'post', 'tags', 'state'], (ctx) => { logger.debug('\'', ctx.message.text, '\' from', ctx.chat.id); porter(ctx) })
+*/
 
 /*
 PHOTO HANDLING SECTION
@@ -325,6 +327,7 @@ var linker = function (ctx) {
     ctx.reply('Link set');
     logger.info('Link set');
 }
+/*
 bot.command(['caption', 'link'], ctx => {
     if (typeof ctx.session.client === 'undefined') {
         logger.warn('User', ctx.chat.id, 'has not yet logged in');
@@ -345,6 +348,7 @@ bot.command(['caption', 'link'], ctx => {
         }
     }
 })
+*/
 
 /*
 QUOTES HANDLING SECTION
@@ -362,6 +366,7 @@ var sourcer = function (ctx) {
     ctx.reply('Quote source set');
     logger.info('Quote source set');
 }
+/*
 bot.command(['quote', 'source'], ctx => {
     if (typeof ctx.session.client === 'undefined') {
         logger.warn('User', ctx.chat.id, 'has not yet logged in');
@@ -378,10 +383,11 @@ bot.command(['quote', 'source'], ctx => {
             quoter(ctx);
         }
         else if (text.substring(0,8) === '/source ') {
-            quoter(ctx);
+            sourcer(ctx);
         }
     }
 })
+*/
 
 /*
 LINK HANDLING SECTION
@@ -399,6 +405,7 @@ var descriptioner = function (ctx) {
     ctx.reply('Link description set');
     logger.info('Link description set');
 }
+/*
 bot.command(['url', 'description'], ctx => {
     if (typeof ctx.session.client === 'undefined') {
         logger.warn('User', ctx.chat.id, 'has not yet logged in');
@@ -419,10 +426,66 @@ bot.command(['url', 'description'], ctx => {
         }
     }
 })
+*/
+
+var porter = function (ctx) {
+  if (typeof ctx.session.client === 'undefined') {
+     logger.warn('User', ctx.chat.id, 'has not yet logged in');
+     ctx.reply('You have to /login first or set your credentials')
+  }
+  else if (typeof ctx.session.name === 'undefined') {
+    logger.warn('User', ctx.chat.id, 'has not yet selected a main blog');
+    ctx.reply('You have to select your destination using the /blog command')
+  }
+  else {
+    ctx.session.post = ctx.session.post || {}
+    var text = ctx.message.text;
+    if (text === '/post') {
+      poster(ctx);
+    }
+    else if (text.substring(0, 6) === '/text ') {
+      texter(ctx);
+    }
+    else if (text.substring(0, 7) === '/title ') {
+      titler(ctx);
+    }
+    else if (text === '/id') {
+      ctx.reply(ctx.chat.id);
+    }
+    else if (text.substring(0,6) === '/tags ') {
+      tagger(ctx);
+    }
+    else if (text.substring(0,7) === '/state ') {
+      stater(ctx);
+    }
+    else if (text.substring(0, 8) === '/format ') {
+      formatter(ctx);
+    }
+    else if (text.substring(0,5) === '/url ') {
+      quoter(ctx);
+    }
+    else if (text.substring(0,13) === '/description ') {
+      quoter(ctx);
+    }
+    if (text.substring(0,7) === '/quote ') {
+      quoter(ctx);
+    }
+    else if (text.substring(0,8) === '/source ') {
+      sourcer(ctx);
+    }
+    if (text.substring(0,9) === '/caption ') {
+      captioner(ctx);
+    }
+    else if (text.substring(0,6) === '/link ') {
+      linker(ctx);
+    }
+  }
+}
+bot.command(['id', 'title', 'text', 'post', 'tags', 'state', 'format', 'url', 'description', 'quote', 'source', 'caption', 'link'], (ctx) => { logger.debug('\'', ctx.message.text, '\' from', ctx.chat.id); porter(ctx) })
 
 bot.command('start', ctx => {
   logger.debug('\'/start\' from', ctx.chat.id); 
-  msg = 'Hi! Welcome aboard the Tumblr posting bot! To get things up, you need to provide me\
+  var msg = 'Hi! Welcome aboard the Tumblr posting bot! To get things up, you need to provide me\
   with your tumblr oAuth key (/oAuth if you don\'t know how to find it) using\
   \n<code>/allset {your oAuth key}</code>\n\
   If you already sent that, simply use /login.\n\
@@ -435,6 +498,7 @@ bot.command('start', ctx => {
   Use /help for a more detailed command list'
   ctx.reply(msg, { parse_mode: 'HTML' });
 })
+bot.command('oAuth', ctx => ctx.reply('http://telegra.ph/Getting-an-oAuth-key-12-07'))
 
 bot.telegram.getMe().then((botInfo) => {
   bot.options.username = botInfo.username
