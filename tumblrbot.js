@@ -244,7 +244,7 @@ var stater = function (ctx) {
 }
 var formatter = function (ctx) {
     if (['html', 'markdown'].indexOf(ctx.message.text.replace('/format ', '')) !== -1) {
-        ctx.session.post['state'] = ctx.message.text.replace('/format ', '');
+        ctx.session.post['format'] = ctx.message.text.replace('/format ', '');
         ctx.reply('Format set');
         logger.info('Format set');
     }
@@ -253,44 +253,6 @@ var formatter = function (ctx) {
         logger.info('Unrecognized format');
     }
 }
-/*
-var porter = function (ctx) {
-  if (typeof ctx.session.client === 'undefined') {
-     logger.warn('User', ctx.chat.id, 'has not yet logged in');
-     ctx.reply('You have to /login first or set your credentials')
-  }
-  else if (typeof ctx.session.name === 'undefined') {
-    logger.warn('User', ctx.chat.id, 'has not yet selected a main blog');
-    ctx.reply('You have to select your destination using the /blog command')
-  }
-  else {
-    ctx.session.post = ctx.session.post || {}
-    var text = ctx.message.text;
-    if (text === '/post') {
-      poster(ctx);
-    }
-    else if (text.substring(0, 6) === '/text ') {
-      texter(ctx);
-    }
-    else if (text.substring(0, 7) === '/title ') {
-      titler(ctx);
-    }
-    else if (text === '/id') {
-      ctx.reply(ctx.chat.id);
-    }
-    else if (text.substring(0,6) === '/tags ') {
-      tagger(ctx);
-    }
-    else if (text.substring(0,7) === '/state ') {
-      stater(ctx);
-    }
-    else if (text.substring(0, 8) === '/format ') {
-      formatter(ctx);
-    }
-  }
-}
-bot.command(['id', 'title', 'text', 'post', 'tags', 'state'], (ctx) => { logger.debug('\'', ctx.message.text, '\' from', ctx.chat.id); porter(ctx) })
-*/
 
 /*
 PHOTO HANDLING SECTION
@@ -327,28 +289,6 @@ var linker = function (ctx) {
     ctx.reply('Link set');
     logger.info('Link set');
 }
-/*
-bot.command(['caption', 'link'], ctx => {
-    if (typeof ctx.session.client === 'undefined') {
-        logger.warn('User', ctx.chat.id, 'has not yet logged in');
-        ctx.reply('You have to /login first or set your credentials')
-    }
-    else if (typeof ctx.session.name === 'undefined') {
-        logger.warn('User', ctx.chat.id, 'has not yet selected a main blog');
-        ctx.reply('You have to select your destination using the /blog command')
-    }
-    else {
-        ctx.session.post = ctx.session.post || {}
-        var text = ctx.message.text;
-        if (text.substring(0,9) === '/caption ') {
-            captioner(ctx);
-        }
-        else if (text.substring(0, 8) === '/linker ') {
-            linker(ctx);
-        }
-    }
-})
-*/
 
 /*
 QUOTES HANDLING SECTION
@@ -362,32 +302,9 @@ var quoter = function (ctx) {
 }
 var sourcer = function (ctx) {
     ctx.session.post['source'] = ctx.message.text.replace('/source ', '');
-    ctx.session.post['type'] = 'quote';
     ctx.reply('Quote source set');
     logger.info('Quote source set');
 }
-/*
-bot.command(['quote', 'source'], ctx => {
-    if (typeof ctx.session.client === 'undefined') {
-        logger.warn('User', ctx.chat.id, 'has not yet logged in');
-        ctx.reply('You have to /login first or set your credentials')
-    }
-    else if (typeof ctx.session.name === 'undefined') {
-        logger.warn('User', ctx.chat.id, 'has not yet selected a main blog');
-        ctx.reply('You have to select your destination using the /blog command')
-    }
-    else {
-        ctx.session.post = ctx.session.post || {}
-        var text = ctx.message.text;
-        if (text.substring(0,7) === '/quote ') {
-            quoter(ctx);
-        }
-        else if (text.substring(0,8) === '/source ') {
-            sourcer(ctx);
-        }
-    }
-})
-*/
 
 /*
 LINK HANDLING SECTION
@@ -405,28 +322,6 @@ var descriptioner = function (ctx) {
     ctx.reply('Link description set');
     logger.info('Link description set');
 }
-/*
-bot.command(['url', 'description'], ctx => {
-    if (typeof ctx.session.client === 'undefined') {
-        logger.warn('User', ctx.chat.id, 'has not yet logged in');
-        ctx.reply('You have to /login first or set your credentials')
-    }
-    else if (typeof ctx.session.name === 'undefined') {
-        logger.warn('User', ctx.chat.id, 'has not yet selected a main blog');
-        ctx.reply('You have to select your destination using the /blog command')
-    }
-    else {
-        ctx.session.post = ctx.session.post || {}
-        var text = ctx.message.text;
-        if (text.substring(0,5) === '/url ') {
-            quoter(ctx);
-        }
-        else if (text.substring(0,13) === '/description ') {
-            quoter(ctx);
-        }
-    }
-})
-*/
 
 var porter = function (ctx) {
   if (typeof ctx.session.client === 'undefined') {
@@ -462,10 +357,10 @@ var porter = function (ctx) {
       formatter(ctx);
     }
     else if (text.substring(0,5) === '/url ') {
-      quoter(ctx);
+      urler(ctx);
     }
     else if (text.substring(0,13) === '/description ') {
-      quoter(ctx);
+      descriptioner(ctx);
     }
     if (text.substring(0,7) === '/quote ') {
       quoter(ctx);
