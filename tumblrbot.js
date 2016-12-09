@@ -221,14 +221,14 @@ var poster = function (ctx) {
         logger.info('No post body set');
         return;
     }
-    if (ctx.session.post.type === 'photo' && !ctx.session.post.source) {
+    if (ctx.session.post.type === 'photo' && !ctx.session.post.data) {
         ctx.reply('No image set');
         logger.info('No image set');
         return;
     }
     ctx.session.client.createPost(ctx.session.name, ctx.session.post, function (err, data) {
       if (err) {
-        logger.err(err);
+        logger.error(err);
         ctx.reply('Error: no post created')
       }
       else {
@@ -282,6 +282,7 @@ var downloadPhoto = function (ctx, id) {
       ctx.session.post['source'] = value;
       logger.info('Image source set');
       ctx.reply('Image source set');
+      logger.debug(value);
   }, function(error) {
     logger.info('Error while getting photo URL');
     ctx.reply('No photo received');
@@ -293,8 +294,7 @@ bot.on('photo', ctx => {
     ctx.session.post['type'] = 'photo';
     if (ctx.message.caption) {ctx.session.post['caption'] = ctx.message.caption; ctx.reply('Caption set'); logger.info('Caption set')}
     var id = ctx.message.photo.length - 1;
-    var lnk = downloadPhoto(ctx, id);
-    logger.debug(lnk);
+    downloadPhoto(ctx, id);
 })
 var captioner = function (ctx) {
     ctx.session.post['caption'] = ctx.message.text.replace('/caption ', '');
@@ -394,9 +394,14 @@ var porter = function (ctx) {
     else if (text.substring(0,6) === '/link ') {
       linker(ctx);
     }
+    else if (text === '/delete') {
+      ctx.session.post = {};
+      ctx.reply('Post deleted. No post set');
+      logger.info('Post deleted. No post set');
+    }
   }
 }
-bot.command(['id', 'title', 'text', 'post', 'tags', 'state', 'format', 'url', 'description', 'quote', 'source', 'caption', 'link'], (ctx) => { logger.debug('\'', ctx.message.text, '\' from', ctx.chat.id); porter(ctx) })
+bot.command(['id', 'title', 'text', 'post', 'tags', 'state', 'format', 'url', 'description', 'quote', 'source', 'caption', 'link', 'delete'], (ctx) => { logger.debug('\'', ctx.message.text, '\' from', ctx.chat.id); porter(ctx) })
 
 bot.command('help', ctx => {
   var msg = 'If you need to start from scratch, please use /start to set\
@@ -408,6 +413,7 @@ bot.command('help', ctx => {
   /state: the state of the post. Specify one of the following:  published, draft, queue, private\n\
   /tags: comma-separated tags for this post\n\
   /format: sets the format type of post. Supported formats are: html & markdown\n\
+  /delete: start from scratch\n\
   <i>Text posts</i>\n\
   /title: the optional title of the post\n\
   /text: the full post body, HTML allowed\n\
