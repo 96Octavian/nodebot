@@ -221,7 +221,7 @@ var poster = function (ctx) {
         logger.info('No post body set');
         return;
     }
-    if (ctx.session.post.type === 'photo' && !ctx.session.post.data) {
+    if (ctx.session.post.type === 'photo' && !ctx.session.post.source) {
         ctx.reply('No image set');
         logger.info('No image set');
         return;
