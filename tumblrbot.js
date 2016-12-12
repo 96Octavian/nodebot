@@ -344,8 +344,6 @@ var descriptioner = function (ctx) {
 }
 
 var porter = function (ctx) {
-  console.log(ctx.session);
-  console.log(ctx);
   if (typeof ctx.session.client === 'undefined') {
      logger.warn('User', ctx.chat.id, 'has not yet logged in');
      ctx.reply('You have to /login first or set your credentials')
