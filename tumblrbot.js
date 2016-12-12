@@ -40,31 +40,31 @@ AUTHENTICATION SECTION
 var consumer_key = function (ctx) {
   logger.debug('consumer_key from', ctx.chat.id)
   logger.info('Received consumer_key');
-  ctx.session[ctx.chat.id].clients.consumer_key = ctx.message.text.replace('/consumer_key ', '');
-  return ctx.reply(ctx.session[ctx.chat.id].clients);
+  ctx.session.clients.consumer_key = ctx.message.text.replace('/consumer_key ', '');
+  return ctx.reply(ctx.session.clients);
 }
 var consumer_secret = function (ctx) {
   logger.debug('consumer_secret from', ctx.chat.id)
   logger.info('Received consumer_secret');
-  ctx.session[ctx.chat.id].clients.consumer_secret = ctx.message.text.replace('/consumer_secret ', '');
-  return ctx.reply(ctx.session[ctx.chat.id].clients);
+  ctx.session.clients.consumer_secret = ctx.message.text.replace('/consumer_secret ', '');
+  return ctx.reply(ctx.session.clients);
 }
 var token_secret = function (ctx) {
   logger.debug('token_secret from', ctx.chat.id)
   logger.info('Received token_secret');
-  ctx.session[ctx.chat.id].clients.token_secret = ctx.message.text.replace('/token_secret ', '');
-  return ctx.reply(ctx.session[ctx.chat.id].clients);
+  ctx.session.clients.token_secret = ctx.message.text.replace('/token_secret ', '');
+  return ctx.reply(ctx.session.clients);
 }
 var token = function (ctx) {
   logger.debug('token from', ctx.chat.id)
   logger.info('Received token');
-  ctx.session[ctx.chat.id].clients.token = ctx.message.text.replace('/token ', '');
-  return ctx.reply(ctx.session[ctx.chat.id].clients);
+  ctx.session.clients.token = ctx.message.text.replace('/token ', '');
+  return ctx.reply(ctx.session.clients);
 }
 bot.command('login', ctx => {
   logger.debug('\'/login\' from', ctx.chat.id)
   arr = authenticating[ctx.chat.id];
-  ctx.session[ctx.chat.id].client = tumblr.createClient(arr);
+  ctx.session.client = tumblr.createClient(arr);
   identity(ctx);
 })
 bot.command('allset', ctx => {
@@ -79,7 +79,7 @@ bot.command('allset', ctx => {
       fixedJSON = fixedJSON.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2": ');
       logger.debug(fixedJSON);
       arr = JSON.parse(fixedJSON);
-      ctx.session[ctx.chat.id].client = tumblr.createClient(arr);
+      ctx.session.client = tumblr.createClient(arr);
       identity(ctx);
       authenticating[ctx.chat.id] = arr;
       fs.writeFile('./auth.json', JSON.stringify(authenticating), function (err) {
@@ -91,10 +91,10 @@ bot.command('allset', ctx => {
 })
 var set = function (ctx) {
   logger.debug('\'/set\' from', ctx.chat.id)
-  if (Object.keys(ctx.session[ctx.chat.id].clients).length === 4) {
-    ctx.session[ctx.chat.id].client = tumblr.createClient(ctx.session[ctx.chat.id].clients);
+  if (Object.keys(ctx.session.clients).length === 4) {
+    ctx.session.client = tumblr.createClient(ctx.session.clients);
     identity(ctx);
-    authenticating[ctx.chat.id] = ctx.session[ctx.chat.id].clients;
+    authenticating[ctx.chat.id] = ctx.session.clients;
     fs.writeFile('./auth.json', JSON.stringify(authenticating), function (err) {
       if (err) logger.error(err);
       logger.warn('New client ID set');
@@ -107,7 +107,7 @@ var set = function (ctx) {
   }
 }
 bot.command(['consumer_secret', 'consumer_key', 'token', 'token_secret', 'set'], ctx => {
-  ctx.session[ctx.chat.id].clients = ctx.session[ctx.chat.id].clients || {}
+  ctx.session.clients = ctx.session.clients || {}
   var text = ctx.message.text;
   if (text === '/set') {
     set(ctx);
@@ -126,8 +126,8 @@ bot.command(['consumer_secret', 'consumer_key', 'token', 'token_secret', 'set'],
   }
 })
 var identity = function (ctx) {
-  ctx.session[ctx.chat.id].names = []
-  ctx.session[ctx.chat.id].client.userInfo(function (err, data) {
+  ctx.session.names = []
+  ctx.session.client.userInfo(function (err, data) {
       if (err) {
           delete authenticating[ctx.chat.id];
           fs.writeFile('./auth.json', JSON.stringify(authenticating), function (err) {
@@ -138,11 +138,11 @@ var identity = function (ctx) {
           return;
       }
     msg = 'Username: ' + data.user.name + '\nAvailable blogs: ';
-    ctx.session[ctx.chat.id].name = ctx.session[ctx.chat.id].name || data.user.blogs[0].name;
+    ctx.session.name = ctx.session.name || data.user.blogs[0].name;
     var i;
     for (i in data.user.blogs) {
       msg += '\n' + data.user.blogs[i].name
-      ctx.session[ctx.chat.id].names.push(data.user.blogs[i].name)
+      ctx.session.names.push(data.user.blogs[i].name)
     }
     msg = '<i>Authenticated</i>\n' + msg;
     return ctx.reply(msg, { parse_mode: 'HTML' });
@@ -150,7 +150,7 @@ var identity = function (ctx) {
 }
 bot.command('me', ctx => {
   logger.debug('\'/me\' from', ctx.chat.id);
-  if (typeof ctx.session[ctx.chat.id].client !== 'undefined') {
+  if (typeof ctx.session.client !== 'undefined') {
     identity(ctx);
   }
   else {
@@ -160,10 +160,10 @@ bot.command('me', ctx => {
 })
 //Choose the destination blog
 var blog = function (ctx) {
-  if (typeof ctx.session[ctx.chat.id].names !== 'undefined' && ctx.session[ctx.chat.id].names.length !== 0) {
+  if (typeof ctx.session.names !== 'undefined' && ctx.session.names.length !== 0) {
     buttons = []
-    for (e in ctx.session[ctx.chat.id].names) {
-      buttons.push([Markup.callbackButton(ctx.session[ctx.chat.id].names[e], ctx.session[ctx.chat.id].names[e])])
+    for (e in ctx.session.names) {
+      buttons.push([Markup.callbackButton(ctx.session.names[e], ctx.session.names[e])])
     }
     return ctx.reply('Choose your blog', Extra.HTML().markup(
       Markup.inlineKeyboard(buttons)))
@@ -193,7 +193,7 @@ bot.command('blog', ctx => {
   }
 })
 bot.action(/.+/, (ctx) => {
-  ctx.session[ctx.chat.id].name = ctx.match[0]
+  ctx.session.name = ctx.match[0]
   ctx.answerCallbackQuery(ctx.match[0] + ' set as destination')
   ctx.editMessageText(ctx.match[0] + ' set as destination')
   logger.info(ctx.match[0], 'set as destination for', ctx.chat.id)  
@@ -204,38 +204,38 @@ TEXT HANDLING SECTION
 */
 
 var texter = function (ctx) {
-  ctx.session[ctx.chat.id].post['type'] = 'text';
-  ctx.session[ctx.chat.id].post['body'] = ctx.message.text.replace('/text ', '');
+  ctx.session.post['type'] = 'text';
+  ctx.session.post['body'] = ctx.message.text.replace('/text ', '');
   ctx.reply('Post body set');
   logger.info('Post body set');
 }
 var titler = function (ctx) {
-  ctx.session[ctx.chat.id].post['title'] = ctx.message.text.replace('/title ', '');
+  ctx.session.post['title'] = ctx.message.text.replace('/title ', '');
   ctx.reply('Post title set');
   logger.info('Post title set');
 }
 var poster = function (ctx) {
-  if (ctx.session[ctx.chat.id].post.type) {
-    if (ctx.session[ctx.chat.id].post.type === 'text' && !ctx.session[ctx.chat.id].post.body) {
+  if (ctx.session.post.type) {
+    if (ctx.session.post.type === 'text' && !ctx.session.post.body) {
         ctx.reply('No post body set');
         logger.info('No post body set');
         return;
     }
-    if (ctx.session[ctx.chat.id].post.type === 'photo' && !ctx.session[ctx.chat.id].post.source) {
+    if (ctx.session.post.type === 'photo' && !ctx.session.post.source) {
         ctx.reply('No image set');
         logger.info('No image set');
         return;
     }
-    ctx.session[ctx.chat.id].client.createPost(ctx.session[ctx.chat.id].name, ctx.session[ctx.chat.id].post, function (err, data) {
+    ctx.session.client.createPost(ctx.session.name, ctx.session.post, function (err, data) {
       if (err) {
         logger.error(err);
         ctx.reply('Error: no post created')
       }
       else {
-        ctx.session[ctx.chat.id].state = ctx.session[ctx.chat.id].state || 'published'
-        logger.info('New ' + ctx.session[ctx.chat.id].state + ' post created')
-        ctx.reply('Post!\nLink: http://' + ctx.session[ctx.chat.id].name + '.tumblr.com/post/' + data.id);
-        ctx.session[ctx.chat.id].post = {}
+        ctx.session.state = ctx.session.state || 'published'
+        logger.info('New ' + ctx.session.state + ' post created')
+        ctx.reply('Post!\nLink: http://' + ctx.session.name + '.tumblr.com/post/' + data.id);
+        ctx.session.post = {}
       }
     });
   }
@@ -245,13 +245,13 @@ var poster = function (ctx) {
   }
 }
 var tagger = function (ctx) {
-  ctx.session[ctx.chat.id].post['tags'] = ctx.message.text.replace('/tags ', '');
+  ctx.session.post['tags'] = ctx.message.text.replace('/tags ', '');
   ctx.reply('Tags set');
   logger.info('Tags set');
 }
 var stater = function (ctx) {
   if (['published', 'draft', 'queue', 'private'].indexOf(ctx.message.text.replace('/state ', '')) !== -1) {
-    ctx.session[ctx.chat.id].post['state'] = ctx.message.text.replace('/state ', '');
+    ctx.session.post['state'] = ctx.message.text.replace('/state ', '');
     ctx.reply('State set');
     logger.info('State set');
   }
@@ -262,7 +262,7 @@ var stater = function (ctx) {
 }
 var formatter = function (ctx) {
     if (['html', 'markdown'].indexOf(ctx.message.text.replace('/format ', '')) !== -1) {
-        ctx.session[ctx.chat.id].post['format'] = ctx.message.text.replace('/format ', '');
+        ctx.session.post['format'] = ctx.message.text.replace('/format ', '');
         ctx.reply('Format set');
         logger.info('Format set');
     }
@@ -279,7 +279,7 @@ PHOTO HANDLING SECTION
 var downloadPhoto = function (ctx, id) {
   return app.getFileLink(ctx.message.photo[id].file_id)
   .then(function(value) {
-      ctx.session[ctx.chat.id].post['source'] = value;
+      ctx.session.post['source'] = value;
       logger.info('Image source set');
       ctx.reply('Image source set');
       logger.debug(value);
@@ -290,21 +290,21 @@ var downloadPhoto = function (ctx, id) {
 }
 bot.on('photo', ctx => {
     logger.info('Received photo');
-    ctx.session[ctx.chat.id].post = ctx.session[ctx.chat.id].post || {}
-    ctx.session[ctx.chat.id].post['type'] = 'photo';
-    if (ctx.message.caption) {ctx.session[ctx.chat.id].post['caption'] = ctx.message.caption; ctx.reply('Caption set'); logger.info('Caption set')}
+    ctx.session.post = ctx.session.post || {}
+    ctx.session.post['type'] = 'photo';
+    if (ctx.message.caption) {ctx.session.post['caption'] = ctx.message.caption; ctx.reply('Caption set'); logger.info('Caption set')}
     var id = ctx.message.photo.length - 1;
     downloadPhoto(ctx, id);
 })
 var captioner = function (ctx) {
-    ctx.session[ctx.chat.id].post['caption'] = ctx.message.text.replace('/caption ', '');
-    ctx.session[ctx.chat.id].post['type'] = 'photo';
+    ctx.session.post['caption'] = ctx.message.text.replace('/caption ', '');
+    ctx.session.post['type'] = 'photo';
     ctx.reply('Caption set');
     logger.info('Caption set');
 }
 var linker = function (ctx) {
-    ctx.session[ctx.chat.id].post['link'] = ctx.message.text.replace('/link ', '');
-    ctx.session[ctx.chat.id].post['type'] = 'photo';
+    ctx.session.post['link'] = ctx.message.text.replace('/link ', '');
+    ctx.session.post['type'] = 'photo';
     ctx.reply('Link set');
     logger.info('Link set');
 }
@@ -314,14 +314,14 @@ QUOTES HANDLING SECTION
 */
 
 var quoter = function (ctx) {
-    ctx.session[ctx.chat.id].post['quote'] = ctx.message.text.replace('/quote ', '');
-    ctx.session[ctx.chat.id].post['type'] = 'quote';
+    ctx.session.post['quote'] = ctx.message.text.replace('/quote ', '');
+    ctx.session.post['type'] = 'quote';
     ctx.reply('Quote text set');
     logger.info('Quote text set');
 }
 var sourcer = function (ctx) {
-  ctx.session[ctx.chat.id].post['type'] = 'quote'
-    ctx.session[ctx.chat.id].post['source'] = ctx.message.text.replace('/source ', '');
+  ctx.session.post['type'] = 'quote'
+    ctx.session.post['source'] = ctx.message.text.replace('/source ', '');
     ctx.reply('Quote source set');
     logger.info('Quote source set');
 }
@@ -331,29 +331,31 @@ LINK HANDLING SECTION
 */
 
 var urler = function (ctx) {
-    ctx.session[ctx.chat.id].post['url'] = ctx.message.text.replace('/url ', '');
-    ctx.session[ctx.chat.id].post['type'] = 'link';
+    ctx.session.post['url'] = ctx.message.text.replace('/url ', '');
+    ctx.session.post['type'] = 'link';
     ctx.reply('Link URL set');
     logger.info('Link URL text set');
 }
 var descriptioner = function (ctx) {
-    ctx.session[ctx.chat.id].post['description'] = ctx.message.text.replace('/description ', '');
-    ctx.session[ctx.chat.id].post['type'] = 'link';
+    ctx.session.post['description'] = ctx.message.text.replace('/description ', '');
+    ctx.session.post['type'] = 'link';
     ctx.reply('Link description set');
     logger.info('Link description set');
 }
 
 var porter = function (ctx) {
-  if (typeof ctx.session[ctx.chat.id].client === 'undefined') {
+  console.log(ctx.session);
+  console.log(ctx);
+  if (typeof ctx.session.client === 'undefined') {
      logger.warn('User', ctx.chat.id, 'has not yet logged in');
      ctx.reply('You have to /login first or set your credentials')
   }
-  else if (typeof ctx.session[ctx.chat.id].name === 'undefined') {
+  else if (typeof ctx.session.name === 'undefined') {
     logger.warn('User', ctx.chat.id, 'has not yet selected a main blog');
     ctx.reply('You have to select your destination using the /blog command')
   }
   else {
-    ctx.session[ctx.chat.id].post = ctx.session[ctx.chat.id].post || {}
+    ctx.session.post = ctx.session.post || {}
     var text = ctx.message.text;
     if (text === '/post') {
       poster(ctx);
@@ -395,7 +397,7 @@ var porter = function (ctx) {
       linker(ctx);
     }
     else if (text === '/delete') {
-      ctx.session[ctx.chat.id].post = {};
+      ctx.session.post = {};
       ctx.reply('Post deleted. No post set');
       logger.info('Post deleted. No post set');
     }
